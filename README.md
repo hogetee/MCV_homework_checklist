@@ -8,12 +8,12 @@
 
 ต้องใช้ **macOS 14 ขึ้นไป**, อินเทอร์เน็ต, บัญชี CU ที่เข้า myCourseVille ได้ และ **Xcode** รุ่นนี้แจกเป็นซอร์ส เพราะแอปที่สร้างบนเครื่องผู้พัฒนายังไม่มีใบรับรอง Developer ID และการรับรองจาก Apple สำหรับแจกบน Mac เครื่องอื่น ([แนวทางของ Apple](https://developer.apple.com/help/account/certificates/create-developer-id-certificates))
 
-1. เปิดหน้า [Releases](https://github.com/hogetee/MCV_homework_checklist/releases) แล้วดาวน์โหลด **Source code (zip)** ของรุ่นล่าสุด แตกไฟล์และเปิด `MCVNot.xcodeproj` ด้วย Xcode 27 หรือใหม่กว่า (รุ่นที่ทดสอบ)
+1. เปิดหน้า [Releases](https://github.com/hogetee/MCV_homework_checklist/releases) แล้วดาวน์โหลด **Source code (zip)** ของรุ่นล่าสุด แตกไฟล์และย้ายโฟลเดอร์ไปไว้ในตำแหน่งถาวร เช่น Documents จากนั้นเปิด `MCVNot.xcodeproj` ด้วย Xcode 27 หรือใหม่กว่า (รุ่นที่ทดสอบ)
 2. ลงชื่อเข้าใช้ Apple Account ใน **Xcode → Settings → Accounts** จากนั้นเลือก Signing Team ของคุณให้ทั้ง target `MCVNot` และ `MCVWidget` ใน **Signing & Capabilities**
 3. ถ้าใช้ Team ID ต่างจากที่อยู่ในโปรเจกต์ ให้เปลี่ยน App Group ให้ตรงกันทั้งสามจุด: `App/MCVNot.entitlements`, `Widget/MCVWidget.entitlements` และ `Shared/AssignmentStore.swift` รูปแบบที่ใช้คือ `<Team ID>.com.mcvnot.shared` ใช้ Team ID จากบัญชี Apple Developer ที่เลือกใน Xcode
 4. ถ้า Xcode แจ้งว่า Bundle Identifier ซ้ำ ให้เปลี่ยน Bundle Identifier ของทั้งสอง target ให้เป็นชื่อเฉพาะของคุณ โดยตัว Widget ต้องเป็นส่วนต่อท้ายของตัวแอป
-5. เลือก scheme `MCVNot` และเครื่อง Mac ของคุณ แล้วกด **Run** รอให้แอปเปิดขึ้น
-6. กด **เข้าสู่ระบบ CU** แล้วลงชื่อเข้าใช้บนหน้า myCourseVille ที่เปิดในแอป สำหรับบัญชี IT Chula ให้ใช้ **รหัสนิสิต 10 หลัก** เป็นชื่อบัญชี จากนั้นกด **ปิดและซิงก์** ไม่ต้องกรอกรหัสผ่านหรือ API key ใน GitHub หรือช่องตั้งค่าอื่น
+5. ติดตั้งแอปกับวิดเจ็ตจากซอร์ส: เปิด Terminal พิมพ์ `bash ` (มีช่องว่างท้ายคำ) แล้วลากไฟล์ `tools/install_update.sh` จากโฟลเดอร์ที่แตกไว้ลงใน Terminal กด Return สคริปต์จะ build และวาง `MCVNot.app` ไว้ข้าง `MCVNot.xcodeproj` จากนั้นเปิดแอปให้ การติดตั้งต้องจบด้วยข้อความ `Installed MCVNot and verified WidgetKit ...`
+6. ในแอป กด **เข้าสู่ระบบ CU** แล้วลงชื่อเข้าใช้บนหน้า myCourseVille สำหรับบัญชี IT Chula ให้ใช้ **รหัสนิสิต 10 หลัก** เป็นชื่อบัญชี จากนั้นกด **ปิดและซิงก์** ไม่ต้องกรอกรหัสผ่านหรือ API key ใน GitHub หรือช่องตั้งค่าอื่น
 7. รอให้แอปขึ้นข้อความว่า **ซิงก์แล้ว … งาน** แล้วกด **เปิดแจ้งเตือน** และเลือก **Allow** หากต้องการรับเตือนงานใกล้ส่ง
 8. คลิกขวาบน Desktop → **Edit Widgets** → ค้นหา **การบ้าน myCourseVille** → เพิ่มวิดเจ็ตขนาดกลางหรือใหญ่
 
@@ -27,7 +27,7 @@
 
 ## สำหรับผู้แก้โค้ด
 
-`tools/install_update.sh` เป็นสคริปต์อัปเดตแอปของเครื่องที่ใช้พัฒนาโปรเจกต์นี้ หากเปลี่ยน Bundle Identifier หรือ Signing Team ต้องปรับสคริปต์ให้ตรงก่อนใช้ ระหว่างพัฒนาให้ใช้ **Run** ใน Xcode ตามขั้นตอนข้างบน
+หลังแก้โค้ด ให้รัน `tools/install_update.sh` อีกครั้งเพื่ออัปเดตแอปและวิดเจ็ตที่ติดตั้งบนเครื่อง สคริปต์อ่าน Bundle Identifier จากวิดเจ็ตที่ build แล้ว จึงใช้ได้หลังตั้งค่า Signing Team และ Bundle Identifier ใน Xcode ตามขั้นตอนข้างบน อย่าย้าย `MCVNot.app` ออกจากโฟลเดอร์ที่สคริปต์ติดตั้งไว้ เพราะ macOS จะจำตำแหน่งวิดเจ็ตนั้น
 
 ## ข้อมูลและข้อจำกัด
 

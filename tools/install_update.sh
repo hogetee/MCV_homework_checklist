@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT="$(cd -- "$(dirname -- "$0")/.." && pwd)"
 APP_PATH="$ROOT/MCVNot.app"
-WIDGET_ID="com.mcvnot.app.widget.v2"
+WIDGET_ID=""
 APP_INFO="$ROOT/App/Info.plist"
 WIDGET_INFO="$ROOT/Widget/Info.plist"
 DEVELOPER_DIR="/Applications/Xcode.app/Contents/Developer"
@@ -19,7 +19,9 @@ restore_on_failure() {
         if [[ -e "$APP_PATH" ]]; then /bin/rm -rf "$APP_PATH"; fi
         /bin/mv "$BACKUP_APP" "$APP_PATH"
         /usr/bin/pluginkit -a "$APP_PATH/Contents/PlugIns/MCVWidget.appex" 2>/dev/null || true
-        /usr/bin/pluginkit -e use -i "$WIDGET_ID" 2>/dev/null || true
+        if [[ -n "$WIDGET_ID" ]]; then
+            /usr/bin/pluginkit -e use -i "$WIDGET_ID" 2>/dev/null || true
+        fi
     fi
     if [[ -e "$STAGED_APP" ]]; then /bin/rm -rf "$STAGED_APP"; fi
     /bin/rm -rf "$BUILD_ROOT"
@@ -49,9 +51,14 @@ DEVELOPER_DIR="$DEVELOPER_DIR" /Applications/Xcode.app/Contents/Developer/usr/bi
 
 BUILT_APP="$BUILD_ROOT/DerivedData/Build/Products/Release/MCVNot.app"
 BUILT_EXTENSION="$BUILT_APP/Contents/PlugIns/MCVWidget.appex"
-WIDGET_VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$BUILT_EXTENSION/Contents/Info.plist")"
 if [[ ! -d "$BUILT_APP" || ! -d "$BUILT_EXTENSION" ]]; then
     echo "Build did not produce the app and widget extension." >&2
+    exit 1
+fi
+WIDGET_ID="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$BUILT_EXTENSION/Contents/Info.plist")"
+WIDGET_VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$BUILT_EXTENSION/Contents/Info.plist")"
+if [[ -z "$WIDGET_ID" ]]; then
+    echo "Built widget extension has no bundle identifier." >&2
     exit 1
 fi
 
