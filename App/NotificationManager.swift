@@ -2,6 +2,16 @@ import Foundation
 import UserNotifications
 
 enum NotificationManager {
+    static func notifySessionExpired() async {
+        let content = UNMutableNotificationContent()
+        content.title = "ต้องเข้าสู่ระบบ myCourseVille ใหม่"
+        content.body = "เปิด MCVNot เพื่อล็อกอินและอัปเดตการบ้านในวิดเจ็ต"
+        content.sound = .default
+        let request = UNNotificationRequest(identifier: "mcvnot.session-expired",
+                                            content: content, trigger: nil)
+        try? await UNUserNotificationCenter.current().add(request)
+    }
+
     static func reschedule(for assignments: [Assignment]) async {
         let center = UNUserNotificationCenter.current()
         let existing = await center.pendingNotificationRequests()

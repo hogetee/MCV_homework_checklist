@@ -11,6 +11,7 @@ final class AppState: NSObject, ObservableObject, WKNavigationDelegate {
     @Published private(set) var lastSync: Date? = AssignmentStore.lastSync()
     @Published private(set) var isSyncing = false
     @Published private(set) var isSignedIn = false
+    @Published private(set) var needsLogin = AssignmentStore.needsLogin()
     @Published var message = "ลงชื่อเข้าใช้ด้วย CU Account เพื่อซิงก์การบ้าน"
     @Published var showLogin = false
 
@@ -23,6 +24,7 @@ final class AppState: NSObject, ObservableObject, WKNavigationDelegate {
         configuration.websiteDataStore = .default()
         webView = WKWebView(frame: .zero, configuration: configuration)
         super.init()
+        if needsLogin { message = "เซสชันหมดอายุ · กดล็อกอินใหม่เพื่ออัปเดตงาน" }
         webView.navigationDelegate = self
         webView.load(URLRequest(url: home))
         refreshTimer = Timer.scheduledTimer(withTimeInterval: 15 * 60, repeats: true) { [weak self] _ in
@@ -34,7 +36,7 @@ final class AppState: NSObject, ObservableObject, WKNavigationDelegate {
 
     func signIn() {
         showLogin = true
-        if webView.url == nil { webView.load(URLRequest(url: home)) }
+        if needsLogin || webView.url == nil { webView.load(URLRequest(url: home)) }
     }
 
     func sync() async {
@@ -62,7 +64,12 @@ final class AppState: NSObject, ObservableObject, WKNavigationDelegate {
             guard let json = value as? String, let data = json.data(using: .utf8) else {
                 throw SyncError.invalidResponse
             }
-            let fetched = try JSONDecoder().decode([FetchedAssignment].self, from: data)
+            let result = try JSONDecoder().decode(FetchResult.self, from: data)
+            if result.authRequired {
+                await requireLogin()
+                return
+            }
+            let fetched = result.items
             let previous = Dictionary(uniqueKeysWithValues: assignments.map { ($0.id, $0) })
             assignments = fetched.compactMap { Assignment(fetched: $0, previous: previous[$0.id]) }
                 .sorted { left, right in
@@ -77,14 +84,27 @@ final class AppState: NSObject, ObservableObject, WKNavigationDelegate {
             AssignmentStore.save(assignments)
             lastSync = .now
             isSignedIn = true
+            needsLogin = false
             message = assignments.isEmpty ? "ไม่พบงานในรายวิชาปัจจุบัน" : "ซิงก์แล้ว \(assignments.count) งาน"
             await NotificationManager.reschedule(for: assignments)
             WidgetCenter.shared.reloadAllTimelines()
         } catch {
-            message = isSignedIn
-                ? "ซิงก์ไม่สำเร็จ: \(error.localizedDescription)"
-                : "กรุณาเข้าสู่ระบบ CU ในแอปก่อนซิงก์"
+            message = "ซิงก์ไม่สำเร็จ: \(error.localizedDescription) · ข้อมูลล่าสุดยังอยู่"
         }
+    }
+
+    private func requireLogin() async {
+        guard lastSync != nil else {
+            message = "กรุณาเข้าสู่ระบบ CU ในแอปก่อนซิงก์"
+            return
+        }
+        let shouldNotify = !needsLogin
+        needsLogin = true
+        isSignedIn = false
+        AssignmentStore.setNeedsLogin(true)
+        message = "เซสชันหมดอายุ · กดล็อกอินใหม่เพื่ออัปเดตงาน"
+        WidgetCenter.shared.reloadAllTimelines()
+        if shouldNotify { await NotificationManager.notifySessionExpired() }
     }
 
     func askForNotifications() async {
@@ -105,6 +125,11 @@ final class AppState: NSObject, ObservableObject, WKNavigationDelegate {
             Task { await sync() }
         }
     }
+}
+
+private struct FetchResult: Decodable {
+    let authRequired: Bool
+    let items: [FetchedAssignment]
 }
 
 private enum SyncError: LocalizedError {

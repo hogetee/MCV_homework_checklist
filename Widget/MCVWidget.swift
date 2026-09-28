@@ -5,27 +5,31 @@ struct MCVEntry: TimelineEntry {
     let date: Date
     let assignments: [Assignment]
     let lastSync: Date?
+    let needsLogin: Bool
 }
 
 struct MCVProvider: TimelineProvider {
     func placeholder(in context: Context) -> MCVEntry {
-        MCVEntry(date: .now, assignments: [], lastSync: nil)
+        MCVEntry(date: .now, assignments: [], lastSync: nil, needsLogin: false)
     }
 
     func getSnapshot(in context: Context, completion: @escaping (MCVEntry) -> Void) {
         completion(MCVEntry(date: .now, assignments: AssignmentStore.load(),
-                            lastSync: AssignmentStore.lastSync()))
+                            lastSync: AssignmentStore.lastSync(),
+                            needsLogin: AssignmentStore.needsLogin()))
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<MCVEntry>) -> Void) {
         let tasks = AssignmentStore.load()
+        let lastSync = AssignmentStore.lastSync()
+        let needsLogin = AssignmentStore.needsLogin()
         let now = Date()
         let nextDates = tasks.compactMap(\.dueAt).flatMap { due in
             [due.addingTimeInterval(-24 * 3600), due.addingTimeInterval(-3 * 3600), due]
         }.filter { $0 > now && $0 < now.addingTimeInterval(24 * 3600) }
         let dates = Array(Set([now] + nextDates)).sorted()
         let entries = dates.map { MCVEntry(date: $0, assignments: tasks,
-                                           lastSync: AssignmentStore.lastSync()) }
+                                           lastSync: lastSync, needsLogin: needsLogin) }
         completion(Timeline(entries: entries, policy: .after(now.addingTimeInterval(30 * 60))))
     }
 }
@@ -67,6 +71,15 @@ struct MCVWidgetView: View {
                 Spacer(minLength: 0)
                 Text("\(entry.assignments.filter { $0.state == .pending }.count) ค้าง")
                     .font(.caption.bold())
+            }
+
+            if entry.needsLogin {
+                Text("เซสชันหมดอายุ · เปิดแอปเพื่อล็อกอินใหม่")
+                    .font(.caption2).foregroundStyle(.orange)
+            } else if let lastSync = entry.lastSync,
+                      entry.date.timeIntervalSince(lastSync) > 60 * 60 {
+                Text("ข้อมูลเก่า · เปิดแอปเพื่อซิงก์")
+                    .font(.caption2).foregroundStyle(.orange)
             }
 
             if entry.assignments.isEmpty {

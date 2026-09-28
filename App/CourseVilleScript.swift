@@ -7,6 +7,18 @@ enum CourseVilleScript {
     const oldItems = JSON.parse(previousItemsJSON);
     const root = location.origin + '/';
     const clean = value => (value || '').replace(/\s+/g, ' ').trim();
+    const loginRequired = () => JSON.stringify({authRequired: true, items: []});
+    const loginPage = html => /please\s+log\s*in|log\s+in\s+chula\s+it\s+account|log\s+in\s+with\s+account/i.test(html);
+    const courseResponse = await fetch('/?q=courseville&type=course&role=all',
+      {credentials: 'same-origin'});
+    if (!courseResponse.ok) throw new Error('Unable to load the course list');
+    if (!courseResponse.url.startsWith(root)) return loginRequired();
+    const courseHTML = await courseResponse.text();
+    const courseDoc = new DOMParser().parseFromString(courseHTML, 'text/html');
+    const signedIn = /signed\s+on\s+as/i.test(courseDoc.body?.textContent || '') ||
+      !!courseDoc.querySelector('a[href*="courseville/course/"]');
+    if (!signedIn && loginPage(courseDoc.body?.textContent || '')) return loginRequired();
+    if (!signedIn) throw new Error('Unable to confirm the sign-in state');
     const worksheetURL = href => {
       try {
         const url = new URL(href, root);
@@ -21,10 +33,14 @@ enum CourseVilleScript {
       headers: {'X-Requested-With': 'XMLHttpRequest'}
     });
     if (!panelResponse.ok) throw new Error('Unable to load the course list');
+    if (!panelResponse.url.startsWith(root)) return loginRequired();
+    const panelText = await panelResponse.text();
+    if (loginPage(panelText) && /^\s*</.test(panelText)) return loginRequired();
     let panel;
-    try { panel = await panelResponse.json(); }
-    catch { throw new Error('Please sign in to myCourseVille first'); }
+    try { panel = JSON.parse(panelText); }
+    catch { throw new Error('Unable to read the course list'); }
     if (typeof panel.html !== 'string') throw new Error('The course list format changed');
+    if (loginPage(panel.html)) return loginRequired();
     const panelDoc = new DOMParser().parseFromString(panel.html, 'text/html');
     const found = new Map();
 
@@ -50,14 +66,6 @@ enum CourseVilleScript {
 
     // Course cards on the signed-in home page identify the student's current
     // courses. The assignment list includes work beyond the seven-day panel.
-    let courseDoc = document;
-    try {
-      const response = await fetch('/?q=courseville&type=course&role=all',
-        {credentials: 'same-origin'});
-      if (response.ok && response.url.startsWith(root)) {
-        courseDoc = new DOMParser().parseFromString(await response.text(), 'text/html');
-      }
-    } catch { /* The currently open home page can still supply course cards. */ }
     const courses = new Map();
     const courseNameFor = anchor => {
       const specific = clean(anchor.querySelector(
@@ -186,6 +194,6 @@ enum CourseVilleScript {
         item.submittedRaw = (body.match(/The latest submission was made at\s*(\d{1,2}-(?:[A-Za-z]{3}|\d{1,2})-\d{4}\s+\d{2}:\d{2}:\d{2})/i) || [])[1] || null;
       } catch { /* Keep the list's last known state. */ }
     }
-    return JSON.stringify(items);
+    return JSON.stringify({authRequired: false, items});
     """#
 }

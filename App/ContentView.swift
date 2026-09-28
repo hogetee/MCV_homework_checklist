@@ -11,7 +11,7 @@ struct ContentView: View {
                     Text(state.message).font(.caption).foregroundStyle(.secondary)
                 }
                 Spacer()
-                Button("เข้าสู่ระบบ CU") { state.signIn() }
+                Button(state.needsLogin ? "ล็อกอินใหม่" : "เข้าสู่ระบบ CU") { state.signIn() }
                 Button("ซิงก์") { Task { await state.sync() } }
                     .disabled(state.isSyncing)
                 Button("เปิดแจ้งเตือน") { Task { await state.askForNotifications() } }
@@ -19,6 +19,14 @@ struct ContentView: View {
             .padding()
 
             Divider()
+
+            if state.needsLogin {
+                Label("เซสชันหมดอายุ · งานด้านล่างเป็นข้อมูลที่ซิงก์ไว้ล่าสุด", systemImage: "exclamationmark.circle.fill")
+                    .font(.callout)
+                    .foregroundStyle(.orange)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(10)
+            }
 
             if state.assignments.isEmpty {
                 ContentUnavailableView("ยังไม่มีรายการงาน", systemImage: "checklist",
