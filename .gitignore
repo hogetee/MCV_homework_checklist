@@ -1,0 +1,9 @@
+.DS_Store
+Build/
+DerivedData/
+*.xcuserstate
+**/xcuserdata/
+MCVNot.app/
+*.app.zip
+*.dSYM/
+.swiftpm/

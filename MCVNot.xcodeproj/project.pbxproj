@@ -1,0 +1,58 @@
+// !$*UTF8*$!
+{
+ archiveVersion = 1;
+ classes = {};
+ objectVersion = 60;
+ objects = {
+  06DAA6CF96A65AEAD98B3095 = { isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "MCVWidget.entitlements"; sourceTree = "<group>"; };
+  07ED26221AC80808A805D841 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ContentView.swift"; sourceTree = "<group>"; };
+  0AC1A83B67D5676E419099FF = { isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = ( 9379037BA50D865E0E95726F, EB45CC447D44240E859B6DEC, C5E9FDC90D70947F1D7E7588, ); runOnlyForDeploymentPostprocessing = 0; };
+  0C4D1537E556FD3CB06548AC = { isa = PBXBuildFile; fileRef = 07ED26221AC80808A805D841; };
+  13E631B26424479A8D293968 = { isa = PBXBuildFile; fileRef = 1A58BC2491ED283D2B70FC84; };
+  1A58BC2491ED283D2B70FC84 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CourseVilleScript.swift"; sourceTree = "<group>"; };
+  1C451FDB50AB3A302B8F03A7 = { isa = PBXGroup; children = ( 5615BFA1E0662D48281402EE, D2DB247AF22215B10F0B2DC3, 07ED26221AC80808A805D841, 64E0DAA2821FB6FF53989B5E, 44B3B3F2F1537B03D46CF723, 1A58BC2491ED283D2B70FC84, 6F7631E669C982ED0667DFFE, 3DCEA04BA627A01BA3FE2030, ); path = "App"; sourceTree = "<group>"; };
+  21B05ADFC9610D58D963A191 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AssignmentStore.swift"; sourceTree = "<group>"; };
+  27277985B6ABFD0B41EDC2D6 = { isa = PBXTargetDependency; target = AC39DB9CBFAEA4FB3D74627B; targetProxy = 5DDC78EFCA17D560CB95A048; };
+  376CCAEB01125556EA30A8A7 = { isa = PBXBuildFile; fileRef = 21B05ADFC9610D58D963A191; };
+  3DCEA04BA627A01BA3FE2030 = { isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "MCVNot.entitlements"; sourceTree = "<group>"; };
+  3F6123883CCE08676BA01A04 = { isa = XCConfigurationList; buildConfigurations = ( 64576546DFB0A737B56741C0, B8C42C19810BD90DB03FBF18, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+  44B3B3F2F1537B03D46CF723 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NotificationManager.swift"; sourceTree = "<group>"; };
+  5015CD1BF7713BE910007C79 = { isa = PBXGroup; children = ( B9074B1E49FB5A6E382E802D, 7291C3226186815A025E12E9, ); name = Products; sourceTree = "<group>"; };
+  5615BFA1E0662D48281402EE = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MCVNotApp.swift"; sourceTree = "<group>"; };
+  58FA84E91B7A80924C0058F3 = { isa = PBXBuildFile; fileRef = 830019E6FC08E5505CDC1AFC; };
+  597E36798B65C1FCAC6ACD1C = { isa = PBXBuildFile; fileRef = 44B3B3F2F1537B03D46CF723; };
+  5DDC78EFCA17D560CB95A048 = { isa = PBXContainerItemProxy; containerPortal = 98F54143AB4E86B28C3AFEE0; proxyType = 1; remoteGlobalIDString = AC39DB9CBFAEA4FB3D74627B; remoteInfo = MCVWidget; };
+  64576546DFB0A737B56741C0 = { isa = XCBuildConfiguration; buildSettings = { CODE_SIGN_ENTITLEMENTS = "App/MCVNot.entitlements"; CODE_SIGN_STYLE = "Automatic"; DEVELOPMENT_TEAM = "P5Q772DRZW"; INFOPLIST_FILE = "App/Info.plist"; PRODUCT_BUNDLE_IDENTIFIER = "com.mcvnot.app"; PRODUCT_NAME = "MCVNot"; SWIFT_VERSION = "5.0"; MACOSX_DEPLOYMENT_TARGET = "14.0"; LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks"; SWIFT_OPTIMIZATION_LEVEL = "-Onone"; DEBUG_INFORMATION_FORMAT = "dwarf"; }; name = Debug; };
+  64E0DAA2821FB6FF53989B5E = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "LoginWebView.swift"; sourceTree = "<group>"; };
+  6F7631E669C982ED0667DFFE = { isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Info.plist"; sourceTree = "<group>"; };
+  70B94E96C0B9CD87D4A5B3DB = { isa = XCConfigurationList; buildConfigurations = ( A271C598BDBFB850630D8FC4, FF9073D23AD4AF09AB2A66F0, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+  7291C3226186815A025E12E9 = { isa = PBXFileReference; explicitFileType = wrapper.app-extension; includeInIndex = 0; path = MCVWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+  72EE5623C6675721514C9186 = { isa = PBXCopyFilesBuildPhase; buildActionMask = 2147483647; dstPath = ""; dstSubfolderSpec = 13; files = ( 83BA866110DA1B5902155457, ); name = "Embed App Extensions"; runOnlyForDeploymentPostprocessing = 0; };
+  7B7B041A6CB247754CC7125F = { isa = PBXBuildFile; fileRef = D2DB247AF22215B10F0B2DC3; };
+  7FEFA489E25E19BEF8A8A2A9 = { isa = PBXGroup; children = ( 1C451FDB50AB3A302B8F03A7, 936C37A5DEDD98F28AD8FB7C, FB7A013CDC3DC41710E66FE2, 5015CD1BF7713BE910007C79, ); sourceTree = "<group>"; };
+  830019E6FC08E5505CDC1AFC = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Assignment.swift"; sourceTree = "<group>"; };
+  83BA866110DA1B5902155457 = { isa = PBXBuildFile; fileRef = 7291C3226186815A025E12E9; settings = { ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+  8FC2453ED5EBF1568058C839 = { isa = PBXNativeTarget; buildConfigurationList = 3F6123883CCE08676BA01A04; buildPhases = ( CB1F8341FDD0D5C6400FDAF8, 72EE5623C6675721514C9186, ); buildRules = (); dependencies = ( 27277985B6ABFD0B41EDC2D6, ); name = MCVNot; productName = MCVNot; productReference = B9074B1E49FB5A6E382E802D; productType = "com.apple.product-type.application"; };
+  936C37A5DEDD98F28AD8FB7C = { isa = PBXGroup; children = ( 830019E6FC08E5505CDC1AFC, 21B05ADFC9610D58D963A191, ); path = "Shared"; sourceTree = "<group>"; };
+  9379037BA50D865E0E95726F = { isa = PBXBuildFile; fileRef = F96139F21A8F41186D918C4B; };
+  9896F4B3E00BD2F03DAB4032 = { isa = PBXBuildFile; fileRef = 64E0DAA2821FB6FF53989B5E; };
+  98F54143AB4E86B28C3AFEE0 = { isa = PBXProject; attributes = { LastUpgradeCheck = 1500; }; buildConfigurationList = BF0BE28CA0D6869A3FA954BF; compatibilityVersion = "Xcode 15.0"; developmentRegion = th; hasScannedForEncodings = 0; knownRegions = (th, en, Base, ); mainGroup = 7FEFA489E25E19BEF8A8A2A9; productRefGroup = 5015CD1BF7713BE910007C79; projectDirPath = ""; projectRoot = ""; targets = ( 8FC2453ED5EBF1568058C839, AC39DB9CBFAEA4FB3D74627B, ); };
+  A271C598BDBFB850630D8FC4 = { isa = XCBuildConfiguration; buildSettings = { APPLICATION_EXTENSION_API_ONLY = "YES"; CODE_SIGN_ENTITLEMENTS = "Widget/MCVWidget.entitlements"; CODE_SIGN_STYLE = "Automatic"; DEVELOPMENT_TEAM = "P5Q772DRZW"; INFOPLIST_FILE = "Widget/Info.plist"; PRODUCT_BUNDLE_IDENTIFIER = "com.mcvnot.app.widget.v2"; PRODUCT_NAME = "MCVWidget"; SKIP_INSTALL = "YES"; SWIFT_VERSION = "5.0"; MACOSX_DEPLOYMENT_TARGET = "14.0"; LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @executable_path/../../../../Frameworks"; SWIFT_OPTIMIZATION_LEVEL = "-Onone"; DEBUG_INFORMATION_FORMAT = "dwarf"; }; name = Debug; };
+  A317697ADA99E65F212156E7 = { isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Info.plist"; sourceTree = "<group>"; };
+  A861A787F9A2A54EBAA99C8F = { isa = PBXBuildFile; fileRef = 5615BFA1E0662D48281402EE; };
+  AC39DB9CBFAEA4FB3D74627B = { isa = PBXNativeTarget; buildConfigurationList = 70B94E96C0B9CD87D4A5B3DB; buildPhases = ( 0AC1A83B67D5676E419099FF, ); buildRules = (); dependencies = (); name = MCVWidget; productName = MCVWidget; productReference = 7291C3226186815A025E12E9; productType = "com.apple.product-type.app-extension"; };
+  B2C3C6A624C4C8479FDD1FBF = { isa = XCBuildConfiguration; buildSettings = { SDKROOT = "macosx"; MACOSX_DEPLOYMENT_TARGET = "14.0"; SWIFT_VERSION = "5.0"; CLANG_ENABLE_MODULES = "YES"; SUPPORTED_PLATFORMS = "macosx"; SWIFT_OPTIMIZATION_LEVEL = "-O"; DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym"; }; name = Release; };
+  B8C42C19810BD90DB03FBF18 = { isa = XCBuildConfiguration; buildSettings = { CODE_SIGN_ENTITLEMENTS = "App/MCVNot.entitlements"; CODE_SIGN_STYLE = "Automatic"; DEVELOPMENT_TEAM = "P5Q772DRZW"; INFOPLIST_FILE = "App/Info.plist"; PRODUCT_BUNDLE_IDENTIFIER = "com.mcvnot.app"; PRODUCT_NAME = "MCVNot"; SWIFT_VERSION = "5.0"; MACOSX_DEPLOYMENT_TARGET = "14.0"; LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks"; SWIFT_OPTIMIZATION_LEVEL = "-O"; DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym"; }; name = Release; };
+  B9074B1E49FB5A6E382E802D = { isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MCVNot.app; sourceTree = BUILT_PRODUCTS_DIR; };
+  BF0BE28CA0D6869A3FA954BF = { isa = XCConfigurationList; buildConfigurations = ( CACD8F8D7E01D03300A42FA5, B2C3C6A624C4C8479FDD1FBF, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+  C5E9FDC90D70947F1D7E7588 = { isa = PBXBuildFile; fileRef = 21B05ADFC9610D58D963A191; };
+  CACD8F8D7E01D03300A42FA5 = { isa = XCBuildConfiguration; buildSettings = { SDKROOT = "macosx"; MACOSX_DEPLOYMENT_TARGET = "14.0"; SWIFT_VERSION = "5.0"; CLANG_ENABLE_MODULES = "YES"; SUPPORTED_PLATFORMS = "macosx"; SWIFT_OPTIMIZATION_LEVEL = "-Onone"; DEBUG_INFORMATION_FORMAT = "dwarf"; }; name = Debug; };
+  CB1F8341FDD0D5C6400FDAF8 = { isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = ( A861A787F9A2A54EBAA99C8F, 7B7B041A6CB247754CC7125F, 0C4D1537E556FD3CB06548AC, 9896F4B3E00BD2F03DAB4032, 597E36798B65C1FCAC6ACD1C, 13E631B26424479A8D293968, 58FA84E91B7A80924C0058F3, 376CCAEB01125556EA30A8A7, ); runOnlyForDeploymentPostprocessing = 0; };
+  D2DB247AF22215B10F0B2DC3 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppState.swift"; sourceTree = "<group>"; };
+  EB45CC447D44240E859B6DEC = { isa = PBXBuildFile; fileRef = 830019E6FC08E5505CDC1AFC; };
+  F96139F21A8F41186D918C4B = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MCVWidget.swift"; sourceTree = "<group>"; };
+  FB7A013CDC3DC41710E66FE2 = { isa = PBXGroup; children = ( F96139F21A8F41186D918C4B, A317697ADA99E65F212156E7, 06DAA6CF96A65AEAD98B3095, ); path = "Widget"; sourceTree = "<group>"; };
+  FF9073D23AD4AF09AB2A66F0 = { isa = XCBuildConfiguration; buildSettings = { APPLICATION_EXTENSION_API_ONLY = "YES"; CODE_SIGN_ENTITLEMENTS = "Widget/MCVWidget.entitlements"; CODE_SIGN_STYLE = "Automatic"; DEVELOPMENT_TEAM = "P5Q772DRZW"; INFOPLIST_FILE = "Widget/Info.plist"; PRODUCT_BUNDLE_IDENTIFIER = "com.mcvnot.app.widget.v2"; PRODUCT_NAME = "MCVWidget"; SKIP_INSTALL = "YES"; SWIFT_VERSION = "5.0"; MACOSX_DEPLOYMENT_TARGET = "14.0"; LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @executable_path/../../../../Frameworks"; SWIFT_OPTIMIZATION_LEVEL = "-O"; DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym"; }; name = Release; };
+ };
+ rootObject = 98F54143AB4E86B28C3AFEE0;
+}
