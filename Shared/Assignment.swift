@@ -20,6 +20,10 @@ struct Assignment: Codable, Identifiable, Hashable {
 
     var isOverdue: Bool { state == .pending && (dueAt.map { $0 < .now } ?? false) }
 
+    func shouldDisplay(at date: Date) -> Bool {
+        !(state == .submitted && (dueAt.map { $0 <= date } ?? false))
+    }
+
     var statusText: String {
         switch state {
         case .submitted: return "ส่งแล้ว"

@@ -2,6 +2,11 @@ import SwiftUI
 
 struct ContentView: View {
     @ObservedObject var state: AppState
+    @State private var currentDate = Date()
+
+    private var visibleAssignments: [Assignment] {
+        state.assignments.filter { $0.shouldDisplay(at: currentDate) }
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -28,12 +33,14 @@ struct ContentView: View {
                     .padding(10)
             }
 
-            if state.assignments.isEmpty {
+            if visibleAssignments.isEmpty {
                 ContentUnavailableView("ยังไม่มีรายการงาน", systemImage: "checklist",
-                    description: Text("เข้าสู่ระบบ CU แล้วกดซิงก์เพื่อดึงรายการงาน"))
+                    description: Text(state.assignments.isEmpty
+                        ? "เข้าสู่ระบบ CU แล้วกดซิงก์เพื่อดึงรายการงาน"
+                        : "งานที่ส่งแล้วและเลยกำหนดถูกซ่อนจากรายการ"))
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
-                List(state.assignments) { assignment in
+                List(visibleAssignments) { assignment in
                     Button { state.open(assignment) } label: {
                         HStack(spacing: 12) {
                             Image(systemName: assignment.state == .submitted ? "checkmark.circle.fill" :
@@ -71,6 +78,7 @@ struct ContentView: View {
             .font(.caption2).foregroundStyle(.secondary).padding(10)
         }
         .frame(minWidth: 620, minHeight: 440)
+        .onReceive(Timer.publish(every: 60, on: .main, in: .common).autoconnect()) { currentDate = $0 }
         .sheet(isPresented: $state.showLogin) {
             VStack(spacing: 0) {
                 HStack {

@@ -13,6 +13,9 @@ struct ModelChecks {
         precondition(completed.state == .submitted)
         precondition(completed.dueAt != nil)
         precondition(completed.submittedAt != nil)
+        let due = completed.dueAt!
+        precondition(completed.shouldDisplay(at: due.addingTimeInterval(-1)))
+        precondition(!completed.shouldDisplay(at: due))
 
         let stored = try! JSONEncoder().encode(completed)
         var legacyRecord = try! JSONSerialization.jsonObject(with: stored) as! [String: Any]
@@ -26,7 +29,9 @@ struct ModelChecks {
             courseName: "Example Course", url: url,
             dueText: "", dueRaw: "28-Sep-2026 23:59",
             submittedRaw: nil, detailLoaded: true)
-        precondition(Assignment(fetched: pending, previous: nil)?.state == .pending)
+        let notSubmitted = Assignment(fetched: pending, previous: nil)!
+        precondition(notSubmitted.state == .pending)
+        precondition(notSubmitted.shouldDisplay(at: due.addingTimeInterval(1)))
 
         let unavailable = FetchedAssignment(
             id: url, title: "", course: "", courseName: nil, url: url, dueText: "",
@@ -34,6 +39,9 @@ struct ModelChecks {
         let preserved = Assignment(fetched: unavailable, previous: completed)!
         precondition(preserved.state == .submitted)
         precondition(preserved.dueAt == completed.dueAt)
+        var noDueDate = completed
+        noDueDate.dueAt = nil
+        precondition(noDueDate.shouldDisplay(at: due.addingTimeInterval(1)))
 
         let fromCourseList = FetchedAssignment(
             id: url, title: "Upcoming assignment", course: "1234567",

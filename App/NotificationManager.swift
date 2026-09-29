@@ -20,12 +20,12 @@ enum NotificationManager {
 
         for task in assignments where task.state == .pending {
             guard let due = task.dueAt, due > .now else { continue }
-            for hours in [24, 3] {
+            for hours in [24, 6, 1] {
                 let fire = due.addingTimeInterval(TimeInterval(-hours * 3600))
                 guard fire > .now else { continue }
                 let content = UNMutableNotificationContent()
                 content.title = "การบ้านใกล้ส่ง: \(task.title)"
-                content.body = "\(task.course) · เหลือ \(hours) ชั่วโมง และยังไม่พบการส่งงาน"
+                content.body = "\(task.courseName ?? task.course) · เหลือ \(hours) ชั่วโมง และยังไม่พบการส่งงาน"
                 content.sound = .default
                 let parts = Calendar.current.dateComponents(
                     [.year, .month, .day, .hour, .minute, .second], from: fire)

@@ -25,7 +25,8 @@ struct MCVProvider: TimelineProvider {
         let needsLogin = AssignmentStore.needsLogin()
         let now = Date()
         let nextDates = tasks.compactMap(\.dueAt).flatMap { due in
-            [due.addingTimeInterval(-24 * 3600), due.addingTimeInterval(-3 * 3600), due]
+            [due.addingTimeInterval(-24 * 3600), due.addingTimeInterval(-6 * 3600),
+             due.addingTimeInterval(-3600), due]
         }.filter { $0 > now && $0 < now.addingTimeInterval(24 * 3600) }
         let dates = Array(Set([now] + nextDates)).sorted()
         let entries = dates.map { MCVEntry(date: $0, assignments: tasks,
@@ -37,6 +38,10 @@ struct MCVProvider: TimelineProvider {
 struct MCVWidgetView: View {
     @Environment(\.widgetFamily) private var family
     let entry: MCVEntry
+
+    private var visibleAssignments: [Assignment] {
+        entry.assignments.filter { $0.shouldDisplay(at: entry.date) }
+    }
 
     var body: some View {
         Group {
@@ -85,8 +90,11 @@ struct MCVWidgetView: View {
             if entry.assignments.isEmpty {
                 Text("เปิดแอปเพื่อล็อกอินและซิงก์งาน")
                     .font(.caption).foregroundStyle(.secondary)
+            } else if visibleAssignments.isEmpty {
+                Text("ไม่มีงานค้าง")
+                    .font(.caption).foregroundStyle(.secondary)
             } else {
-                ForEach(Array(entry.assignments.prefix(limit))) { task in
+                ForEach(Array(visibleAssignments.prefix(limit))) { task in
                     Link(destination: task.url) {
                         HStack(spacing: 7) {
                             Image(systemName: task.state == .submitted ? "checkmark.circle.fill" :
