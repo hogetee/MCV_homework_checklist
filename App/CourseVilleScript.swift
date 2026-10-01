@@ -10,7 +10,8 @@ enum CourseVilleScript {
     const loginRequired = () => JSON.stringify({authRequired: true, items: []});
     const loginPage = html => /please\s+log\s*in|log\s+in\s+chula\s+it\s+account|log\s+in\s+with\s+account/i.test(html);
     const courseResponse = await fetch('/?q=courseville&type=course&role=all',
-      {credentials: 'same-origin'});
+      {credentials: 'same-origin', cache: 'no-store'});
+    if (courseResponse.status === 401) return loginRequired();
     if (!courseResponse.ok) throw new Error('Unable to load the course list');
     if (!courseResponse.url.startsWith(root)) return loginRequired();
     const courseHTML = await courseResponse.text();
@@ -29,9 +30,10 @@ enum CourseVilleScript {
     };
 
     const panelResponse = await fetch('/?q=courseville/ajax/getactivepanelcontent', {
-      method: 'POST', credentials: 'same-origin',
+      method: 'POST', credentials: 'same-origin', cache: 'no-store',
       headers: {'X-Requested-With': 'XMLHttpRequest'}
     });
+    if (panelResponse.status === 401) return loginRequired();
     if (!panelResponse.ok) throw new Error('Unable to load the course list');
     if (!panelResponse.url.startsWith(root)) return loginRequired();
     const panelText = await panelResponse.text();

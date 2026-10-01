@@ -22,6 +22,7 @@ final class AppState: NSObject, ObservableObject, WKNavigationDelegate {
     private var refreshTimer: Timer?
     private var cookieSession: SessionCookieStore?
     private var syncRequested = false
+    private var sessionPageReload: SessionPageReload?
 
     var needsLogin: Bool { !loginSources.isEmpty }
     var loginMessage: String { loginSources.map(\.name).joined(separator: ", ") + " · ต้องเข้าสู่ระบบใหม่" }
@@ -97,17 +98,17 @@ final class AppState: NSObject, ObservableObject, WKNavigationDelegate {
                      "course": $0.course, "courseName": $0.courseName ?? "", "dueText": $0.dueLabel]
                 }
                 let knownData = try JSONSerialization.data(withJSONObject: known)
-                let value = try await view.callAsyncJavaScript(
-                    source == .courseVille ? CourseVilleScript.fetchAssignments : ClassDeeDeeScript.fetchAssignments,
-                    arguments: ["previousItemsJSON": String(decoding: knownData, as: UTF8.self)],
-                    in: nil, contentWorld: .page)
-                guard let json = value as? String, let data = json.data(using: .utf8) else {
-                    throw SyncError.invalidResponse
-                }
+                let knownJSON = String(decoding: knownData, as: UTF8.self)
                 var incoming: [Assignment]
                 var failedCourses: [String] = []
                 if source == .courseVille {
-                    let result = try JSONDecoder().decode(FetchResult.self, from: data)
+                    let result = try await SessionRecovery.fetch(
+                        read: {
+                            let data = try await self.readAssignments(source, knownJSON: knownJSON)
+                            return try JSONDecoder().decode(FetchResult.self, from: data)
+                        },
+                        needsLogin: { $0.authRequired },
+                        reload: { try await self.refreshMCVSession() })
                     if result.authRequired {
                         await requireLogin(source)
                         results.append("\(source.name): ต้องเข้าสู่ระบบใหม่")
@@ -116,6 +117,7 @@ final class AppState: NSObject, ObservableObject, WKNavigationDelegate {
                     let previous = Dictionary(uniqueKeysWithValues: old.map { ($0.id, $0) })
                     incoming = result.items.compactMap { Assignment(fetched: $0, previous: previous[$0.id]) }
                 } else {
+                    let data = try await readAssignments(source, knownJSON: knownJSON)
                     let result = try JSONDecoder().decode(ClassDeeDeeFetchResult.self, from: data)
                     if result.authRequired {
                         await requireLogin(source)
@@ -151,6 +153,48 @@ final class AppState: NSObject, ObservableObject, WKNavigationDelegate {
         WidgetCenter.shared.reloadAllTimelines()
     }
 
+    private func readAssignments(_ source: AssignmentSource, knownJSON: String) async throws -> Data {
+        let view = source == .courseVille ? webView : classDeeDeeWebView
+        let value = try await view.callAsyncJavaScript(
+            source == .courseVille ? CourseVilleScript.fetchAssignments : ClassDeeDeeScript.fetchAssignments,
+            arguments: ["previousItemsJSON": knownJSON], in: nil, contentWorld: .page)
+        guard let json = value as? String, let data = json.data(using: .utf8) else {
+            throw SyncError.invalidResponse
+        }
+        return data
+    }
+
+    private func refreshMCVSession() async throws -> Bool {
+        // Leave a login form alone while the user is interacting with it.
+        guard !(showLogin && loginSource == .courseVille) else { return false }
+        message = "myCourseVille: กำลังตรวจเซสชันเดิมและซิงก์อีกครั้ง"
+        return try await withCheckedThrowingContinuation { continuation in
+            let request = URLRequest(url: AssignmentSource.courseVille.home,
+                cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 25)
+            guard let navigation = webView.load(request) else {
+                continuation.resume(throwing: SyncError.invalidResponse)
+                return
+            }
+            let timeout = Task { [weak self] in
+                do { try await Task.sleep(nanoseconds: 25_000_000_000) }
+                catch { return }
+                self?.completeSessionRefresh(navigation, result: .failure(SyncError.sessionRefreshTimedOut))
+            }
+            sessionPageReload = SessionPageReload(navigation: navigation,
+                continuation: continuation, timeout: timeout)
+        }
+    }
+
+    @discardableResult
+    private func completeSessionRefresh(_ navigation: WKNavigation?, result: Result<Bool, Error>) -> Bool {
+        guard let pending = sessionPageReload, let navigation,
+              pending.navigation === navigation else { return false }
+        sessionPageReload = nil
+        pending.timeout.cancel()
+        pending.continuation.resume(with: result)
+        return true
+    }
+
     private func requireLogin(_ source: AssignmentSource) async {
         let shouldNotify = AssignmentStore.lastSync(for: source) != nil && !AssignmentStore.needsLogin(for: source)
         AssignmentStore.setNeedsLogin(true, source: source)
@@ -172,11 +216,29 @@ final class AppState: NSObject, ObservableObject, WKNavigationDelegate {
     func open(_ assignment: Assignment) { NSWorkspace.shared.open(assignment.displayURL(at: .now)) }
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        // This refresh is already awaited by sync(); scheduling another sync
+        // here would retry forever when the session really has expired.
+        if completeSessionRefresh(navigation,
+            result: .success(webView.url?.host == AssignmentSource.courseVille.home.host)) { return }
         let source: AssignmentSource = webView === classDeeDeeWebView ? .classDeeDee : .courseVille
         if webView.url?.host == source.home.host {
             Task { await sync() }
         }
     }
+
+    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+        completeSessionRefresh(navigation, result: .failure(error))
+    }
+
+    func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+        completeSessionRefresh(navigation, result: .failure(error))
+    }
+}
+
+private struct SessionPageReload {
+    let navigation: WKNavigation
+    let continuation: CheckedContinuation<Bool, Error>
+    let timeout: Task<Void, Never>
 }
 
 private struct FetchResult: Decodable {
@@ -192,5 +254,11 @@ private struct ClassDeeDeeFetchResult: Decodable {
 
 private enum SyncError: LocalizedError {
     case invalidResponse
-    var errorDescription: String? { "ข้อมูลตอบกลับจากเว็บไม่ถูกต้อง" }
+    case sessionRefreshTimedOut
+    var errorDescription: String? {
+        switch self {
+        case .invalidResponse: "ข้อมูลตอบกลับจากเว็บไม่ถูกต้อง"
+        case .sessionRefreshTimedOut: "โหลดหน้าเว็บเพื่อตรวจเซสชันไม่สำเร็จ"
+        }
+    }
 }

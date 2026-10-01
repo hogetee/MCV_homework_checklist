@@ -43,5 +43,10 @@ const response = (text, url = homeURL) => ({ok: true, url, text: async () => tex
   await check('signed-in account with no assignments',
     [response('Signed on as Example User'), response(JSON.stringify({html: ''}))],
     {authRequired: false, items: []});
+  await check('course list explicitly rejects authentication',
+    [{ok: false, status: 401}], {authRequired: true, items: []});
+  await check('session expires between the course list and panel',
+    [response('Signed on as Example User'), {ok: false, status: 401}],
+    {authRequired: true, items: []});
   console.log('Session checks passed');
 })().catch(error => { console.error(error); process.exitCode = 1; });
