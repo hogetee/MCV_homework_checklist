@@ -1,0 +1,13 @@
+MCVNot — เริ่มใช้
+
+ต้องใช้ macOS 14 ขึ้นไป, อินเทอร์เน็ต และบัญชี CU
+
+1. ลาก MCVNot.app ไปที่ Applications ในหน้าต่างนี้
+2. เปิด MCVNot จาก Applications
+3. ในแอป กด myCourseVille แล้วเข้าสู่ระบบด้วยบัญชี CU สำหรับ IT Chula ใช้รหัสนิสิต 10 หลักเป็นชื่อบัญชี จากนั้นกด ปิดและซิงก์
+4. ถ้าใช้ ClassDeeDee กด เชื่อม ClassDeeDee > Connect with Chula SSO แล้วเข้าสู่ระบบด้วยตัวเอง
+5. กด เปิดแจ้งเตือน และอนุญาต จากนั้นคลิกขวาบน Desktop > Edit Widgets > การบ้าน MCV + ClassDeeDee
+
+ห้ามเปิดแอปจากใน disk image ให้ลากไป Applications ก่อน และแทนที่แอปรุ่นเก่าแทนการเก็บหลายชุด
+
+คู่มือและซอร์ส: https://github.com/hogetee/MCV_homework_checklist

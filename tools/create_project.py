@@ -108,7 +108,7 @@ widget_settings = {"APPLICATION_EXTENSION_API_ONLY": "YES",
 
 def config_list(name, settings):
     debug = config(name + " Debug", settings | {"SWIFT_OPTIMIZATION_LEVEL": "-Onone", "DEBUG_INFORMATION_FORMAT": "dwarf"})
-    release = config(name + " Release", settings | {"SWIFT_OPTIMIZATION_LEVEL": "-O", "DEBUG_INFORMATION_FORMAT": "dwarf-with-dsym"})
+    release = config(name + " Release", settings | {"SWIFT_OPTIMIZATION_LEVEL": "-O", "DEBUG_INFORMATION_FORMAT": "dwarf-with-dsym", "ENABLE_HARDENED_RUNTIME": "YES", "CODE_SIGN_INJECT_BASE_ENTITLEMENTS": "NO"})
     return add(name + " configurations", "{ isa = XCConfigurationList; buildConfigurations = " +
                arr([debug, release]) + "; defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; }")
 

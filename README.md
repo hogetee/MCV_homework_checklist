@@ -8,7 +8,20 @@
 
 ## ดาวน์โหลดและเริ่มใช้
 
-ต้องใช้ **macOS 14 ขึ้นไป**, อินเทอร์เน็ต, บัญชี CU ที่เข้า myCourseVille ได้ และ **Xcode** รุ่นนี้แจกเป็นซอร์ส เพราะแอปที่สร้างบนเครื่องผู้พัฒนายังไม่มีใบรับรอง Developer ID และการรับรองจาก Apple สำหรับแจกบน Mac เครื่องอื่น ([แนวทางของ Apple](https://developer.apple.com/help/account/certificates/create-developer-id-certificates))
+ต้องใช้ **macOS 14 ขึ้นไป**, อินเทอร์เน็ต และบัญชี CU ดาวน์โหลดแอปสำเร็จรูปได้โดย **ไม่ต้องติดตั้ง Xcode** รองรับทั้ง Mac Apple Silicon และ Intel
+
+**ไฟล์ดาวน์โหลดนี้เป็นรุ่นทดลอง** ลงนามด้วย Apple Development และยังไม่ได้ผ่าน notarization จึงอาจถูก macOS บล็อกในครั้งแรก ขณะนี้ตรวจบน Mac ของผู้พัฒนาแล้ว แต่ยังไม่ได้ทดสอบบน Mac เครื่องอื่น หากต้องการการติดตั้งภายใต้การตั้งค่า Gatekeeper ปกติ ต้องใช้ Developer ID และ notarization ตาม [แนวทางของ Apple](https://developer.apple.com/developer-id/)
+
+1. ดาวน์โหลด [**MCVNot-0.4.3-universal.dmg**](https://github.com/hogetee/MCV_homework_checklist/releases/download/v0.4.3/MCVNot-0.4.3-universal.dmg) จากหน้า [Releases](https://github.com/hogetee/MCV_homework_checklist/releases)
+2. เปิดไฟล์ แล้วลาก **MCVNot.app → Applications** เปิดแอปจาก Applications หาก macOS ไม่สามารถตรวจสอบผู้พัฒนาได้ และคุณเชื่อถือโครงการนี้ ให้ตัดสินใจอนุญาตเฉพาะแอปนี้เองที่ **System Settings → Privacy & Security → Open Anyway** ตาม [คำแนะนำของ Apple](https://support.apple.com/102445)
+3. กด **myCourseVille** แล้วลงชื่อเข้าใช้ด้วยบัญชี CU สำหรับ IT Chula ใช้ **รหัสนิสิต 10 หลัก** เป็นชื่อบัญชี จากนั้นกด **ปิดและซิงก์** ถ้าใช้ ClassDeeDee ด้วย ให้กด **เชื่อม ClassDeeDee → Connect with Chula SSO** แล้วลงชื่อเข้าใช้
+4. กด **เปิดแจ้งเตือน → Allow** หากต้องการรับเตือนงานใกล้ส่งและรีวิว
+5. คลิกขวาบน Desktop → **Edit Widgets** → **การบ้าน MCV + ClassDeeDee** → เพิ่มวิดเจ็ตขนาดกลางหรือใหญ่
+
+ดาวน์โหลดจาก Release ของโครงการนี้โดยตรง ภายในไฟล์มี `START-HERE.txt` พร้อมวิธีเริ่มใช้ แอปที่แจกไม่มีเซสชันหรือข้อมูลงานจากเครื่องผู้พัฒนา เมื่ออัปเดตให้ปิดแอปและแทนที่ `MCVNot.app` เดิม อย่าเปิดแอปจาก disk image หรือเก็บแอปหลายชุดไว้พร้อมกัน
+
+<details>
+<summary>สำหรับผู้ที่ต้องการ build จากซอร์สด้วย Xcode</summary>
 
 1. เปิดหน้า [Releases](https://github.com/hogetee/MCV_homework_checklist/releases) แล้วดาวน์โหลด **Source code (zip)** ของรุ่นล่าสุด แตกไฟล์และย้ายโฟลเดอร์ไปไว้ในตำแหน่งถาวร เช่น Documents จากนั้นเปิด `MCVNot.xcodeproj` ด้วย Xcode 27 หรือใหม่กว่า (รุ่นที่ทดสอบ)
 2. ลงชื่อเข้าใช้ Apple Account ใน **Xcode → Settings → Accounts** จากนั้นเลือก Signing Team ของคุณให้ทั้ง target `MCVNot` และ `MCVWidget` ใน **Signing & Capabilities**
@@ -19,6 +32,9 @@
 7. รอให้แอปขึ้นข้อความจำนวนงานที่ซิงก์ของแต่ละเว็บ แล้วกด **เปิดแจ้งเตือน** และเลือก **Allow** หากต้องการรับเตือนงานใกล้ส่ง
 8. ถ้าใช้ ClassDeeDee กด **เชื่อม ClassDeeDee** เลือก **Connect with Chula SSO** แล้วลงชื่อเข้าใช้ เมื่อกลับมาหน้า ClassDeeDee กด **ปิดและซิงก์** แอปจะอ่านงานของรายวิชาในเทอมล่าสุดที่คุณลงทะเบียนไว้ การเข้าสู่ระบบของสองเว็บแยกกัน
 9. คลิกขวาบน Desktop → **Edit Widgets** → ค้นหา **การบ้าน MCV + ClassDeeDee** → เพิ่มวิดเจ็ตขนาดกลางหรือใหญ่
+
+
+</details>
 
 คลิกงานในแอปหรือวิดเจ็ตเพื่อเปิดหน้างานในเว็บที่มาของงาน สีแดงหมายถึงยังไม่พบการส่ง สีเขียวคือส่งแล้ว และสีส้มคือแอปอ่านสถานะไม่ได้ งานที่ส่งแล้วและเลยกำหนดจะถูกซ่อน ส่วนงานที่ยังไม่ส่งแม้เลยกำหนดก็ยังแสดงอยู่
 
@@ -54,3 +70,10 @@
 - ClassDeeDee ใช้ข้อมูลจากหน้ารวม Assignments ได้แก่รายการส่งงาน จำนวนรีวิวขั้นต่ำ จำนวนที่รีวิวแล้ว และวันเริ่ม/จบรีวิว โดยแปลงเวลาจาก UTC เป็นเวลาของ Mac หากบางวิชาซิงก์ไม่ได้ แอปเก็บข้อมูลล่าสุดของวิชานั้นไว้
 - แอปไม่ส่งงานและไม่อัปโหลดไฟล์ให้ หากอาจารย์แจ้งงานผ่านประกาศอย่างเดียวหรืองานยังไม่เผยแพร่ งานนั้นอาจไม่ปรากฏ
 - วิดเจ็ตและการแจ้งเตือนขึ้นอยู่กับข้อมูลจากการซิงก์ล่าสุด หาก myCourseVille เปลี่ยนหน้าเว็บ แอปอาจอ่านข้อมูลไม่ครบ
+
+## สร้างไฟล์สำหรับแจก
+
+- รุ่นทดลองที่ยังไม่ผ่าน notarization: `bash tools/package_release.sh --development-preview` ต้องมีใบรับรอง Apple Development
+- รุ่นที่ Apple รับรองสำหรับแจก: `bash tools/package_release.sh --notary-profile PROFILE` ต้องมีใบรับรอง Developer ID Application และโปรไฟล์ notarytool ใน Keychain ของผู้สร้าง
+- สคริปต์สร้าง Universal app, เปิด Hardened Runtime, ตรวจว่าไม่มีสิทธิ์แนบ debugger และสร้าง `.dmg` พร้อม Applications shortcut, คู่มือเริ่มใช้ และ `SHA256SUMS.txt` ใน `Build/Release/`
+- โหมดสำหรับแจกจะไม่สำเร็จหาก Apple ไม่ยอมรับการส่ง notarization ส่วนโหมดทดลองไม่รับรองว่า Gatekeeper จะอนุญาตบน Mac ทุกเครื่อง
