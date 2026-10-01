@@ -22,7 +22,9 @@ bash tools/package_release.sh --development-preview
 bash tools/package_release.sh --notary-profile PROFILE
 ```
 
-ไฟล์อยู่ใน `Build/Release/` ได้แก่ Universal `.dmg` พร้อมแอป วิดเจ็ต Applications shortcut คู่มือเริ่มใช้ และ `SHA256SUMS.txt` สคริปต์ตรวจลายเซ็น สถาปัตยกรรม Hardened Runtime และสิทธิ์ debugger โหมด notarization จะต้องได้ผล Accepted และตรวจ ticket สำเร็จ
+ไฟล์อยู่ใน `Build/Release/` ได้แก่ Universal `.dmg` พร้อมแอป วิดเจ็ต พื้นหลังสอนลากเข้า Applications ทางลัดเปิด Privacy & Security คู่มือเริ่มใช้ และ `SHA256SUMS.txt` สคริปต์ตรวจลายเซ็น สถาปัตยกรรม Hardened Runtime และสิทธิ์ debugger โหมด notarization จะต้องได้ผล Accepted และตรวจ ticket สำเร็จ
+
+เครื่องมือ `tools/InstallerLayout` สร้างภาพพื้นหลังและข้อมูลหน้าต่าง Finder โดยใช้ Swift Package [DSStore](https://github.com/sindresorhus/DSStore) ที่ล็อก revision ไว้ ครั้งแรกที่สร้างไฟล์แจกต้องใช้อินเทอร์เน็ตเพื่อดาวน์โหลดไลบรารี ทางลัด `.inetloc` เปิดหน้าตั้งค่าเท่านั้น ผู้ใช้ต้องกด Open Anyway เอง
 
 รุ่นทดลองยังไม่ได้ผ่าน notarization และไม่รับรองว่า Gatekeeper จะอนุญาตบน Mac ทุกเครื่อง การแจกภายใต้การตั้งค่า Gatekeeper ปกติต้องใช้ [Developer ID และ notarization](https://developer.apple.com/developer-id/) ต้องทดสอบบน Mac เครื่องอื่นก่อนรับรองการติดตั้ง
 

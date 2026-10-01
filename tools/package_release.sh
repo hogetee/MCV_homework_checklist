@@ -25,7 +25,16 @@ APP_VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$
 WIDGET_VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$ROOT/Widget/Info.plist")"
 [[ "$APP_VERSION" == "$WIDGET_VERSION" ]] || { echo "App/widget versions differ." >&2; exit 1; }
 WORK="$(/usr/bin/mktemp -d "${TMPDIR:-/private/tmp}/MCVNotRelease.XXXXXX")"
-trap '/bin/rm -rf "$WORK"' EXIT
+MOUNT="$WORK/Mounted"
+MOUNTED=0
+cleanup() {
+    if [[ "$MOUNTED" -eq 1 ]] && ! /usr/bin/hdiutil detach -quiet "$MOUNT"; then
+        echo "Could not detach the temporary installer image; kept $WORK for cleanup." >&2
+        return 1
+    fi
+    /bin/rm -rf "$WORK"
+}
+trap cleanup EXIT
 OUTPUT="$ROOT/Build/Release"
 /bin/mkdir -p "$OUTPUT" "$WORK/Image"
 SIGNER="Developer ID Application"
@@ -59,13 +68,29 @@ done
 /usr/bin/ditto "$APP" "$WORK/Image/MCVNot.app"
 /bin/ln -s /Applications "$WORK/Image/Applications"
 if [[ "$PREVIEW" -eq 1 ]]; then
-    /bin/cp "$ROOT/docs/START-HERE-preview.txt" "$WORK/Image/START-HERE.txt"
+    /bin/cp "$ROOT/docs/START-HERE-preview.txt" "$WORK/Image/เริ่มใช้.txt"
 else
-    /bin/cp "$ROOT/docs/START-HERE.txt" "$WORK/Image/START-HERE.txt"
+    /bin/cp "$ROOT/docs/START-HERE.txt" "$WORK/Image/เริ่มใช้.txt"
 fi
-DMG="$OUTPUT/MCVNot-$APP_VERSION-universal.dmg"
-/usr/bin/hdiutil create -quiet -ov -format UDZO -volname "MCVNot $APP_VERSION" \
-    -srcfolder "$WORK/Image" "$DMG"
+MODE="distribution"
+if [[ "$PREVIEW" -eq 1 ]]; then MODE="preview"; fi
+SWIFT="$DEVELOPER_DIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift"
+"$SWIFT" build --package-path "$ROOT/tools/InstallerLayout" \
+    --scratch-path "$WORK/LayoutBuild" -c release --quiet
+LAYOUT_BIN="$("$SWIFT" build --package-path "$ROOT/tools/InstallerLayout" \
+    --scratch-path "$WORK/LayoutBuild" -c release --show-bin-path)/InstallerLayout"
+/usr/bin/hdiutil create -quiet -format UDRW -fs HFS+ -volname "MCVNot $APP_VERSION" \
+    -srcfolder "$WORK/Image" "$WORK/Installer.dmg"
+/bin/mkdir -p "$MOUNT"
+/usr/bin/hdiutil attach -quiet -nobrowse -mountpoint "$MOUNT" "$WORK/Installer.dmg"
+MOUNTED=1
+"$LAYOUT_BIN" "$MOUNT" "$MODE"
+/bin/cp "$ROOT/App/Resources/AppIcon.icns" "$MOUNT/.VolumeIcon.icns"
+"$DEVELOPER_DIR/usr/bin/SetFile" -a C "$MOUNT"
+/usr/bin/hdiutil detach -quiet "$MOUNT"
+MOUNTED=0
+DMG="$WORK/MCVNot-$APP_VERSION-universal.dmg"
+/usr/bin/hdiutil convert -quiet -format UDZO -o "$DMG" "$WORK/Installer.dmg"
 
 if [[ "$PREVIEW" -eq 0 ]]; then
     /usr/bin/codesign --sign "$SIGNER" --timestamp "$DMG"
@@ -79,9 +104,10 @@ if [[ "$PREVIEW" -eq 0 ]]; then
     /usr/bin/xcrun stapler validate "$DMG"
 fi
 /usr/bin/hdiutil verify "$DMG"
+/bin/mv "$DMG" "$OUTPUT/$(/usr/bin/basename "$DMG")"
 cd "$OUTPUT"
 /usr/bin/shasum -a 256 "$(/usr/bin/basename "$DMG")" > SHA256SUMS.txt
-echo "Created $DMG"
+echo "Created $OUTPUT/$(/usr/bin/basename "$DMG")"
 if [[ "$PREVIEW" -eq 1 ]]; then
     echo "Development preview: not notarized; first launch may need a user-approved macOS exception."
 fi

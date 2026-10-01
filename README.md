@@ -8,13 +8,13 @@
 
 ## ดาวน์โหลดและติดตั้ง
 
-1. [ดาวน์โหลด MCVNot (.dmg)](https://github.com/hogetee/MCV_homework_checklist/releases/download/v0.4.3/MCVNot-0.4.3-universal.dmg)
+1. [ดาวน์โหลด MCVNot (.dmg)](https://github.com/hogetee/MCV_homework_checklist/releases/download/v0.4.4/MCVNot-0.4.4-universal.dmg)
 2. เปิดไฟล์ แล้วลาก **MCVNot → Applications** จากนั้นเปิดแอปจาก Applications
 3. กด **myCourseVille** แล้วล็อกอิน CU ด้วย **รหัสนิสิต 10 หลัก** สำหรับ IT Chula จากนั้นกด **ปิดและซิงก์** ถ้าใช้ ClassDeeDee ให้เชื่อมผ่าน **Chula SSO** ด้วย
 4. กด **เปิดแจ้งเตือน → Allow**
 5. คลิกขวาบน Desktop → **Edit Widgets → การบ้าน MCV + ClassDeeDee** แล้วเลือกขนาดกลางหรือใหญ่
 
-**รุ่นทดลอง:** ยังไม่ผ่านการรับรองจาก Apple และทดสอบเฉพาะ Mac ของผู้พัฒนา หาก macOS บล็อกและคุณเชื่อถือแอป ให้เลือก **System Settings → Privacy & Security → Open Anyway** ตาม [คำแนะนำของ Apple](https://support.apple.com/102445)
+**รุ่นทดลอง:** ยังไม่ผ่านการรับรองจาก Apple และทดสอบเฉพาะ Mac ของผู้พัฒนา หาก macOS บล็อก ให้ดับเบิลคลิก **เปิดตั้งค่า** ในหน้าติดตั้ง แล้วเลือก **Open Anyway** ด้วยตัวเองหากเชื่อถือแอป ตาม [คำแนะนำของ Apple](https://support.apple.com/102445)
 
 ## วิธีใช้
 
