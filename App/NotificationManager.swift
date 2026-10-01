@@ -2,12 +2,12 @@ import Foundation
 import UserNotifications
 
 enum NotificationManager {
-    static func notifySessionExpired() async {
+    static func notifySessionExpired(source: AssignmentSource = .courseVille) async {
         let content = UNMutableNotificationContent()
-        content.title = "ต้องเข้าสู่ระบบ myCourseVille ใหม่"
+        content.title = "ต้องเข้าสู่ระบบ \(source.name) ใหม่"
         content.body = "เปิด MCVNot เพื่อล็อกอินและอัปเดตการบ้านในวิดเจ็ต"
         content.sound = .default
-        let request = UNNotificationRequest(identifier: "mcvnot.session-expired",
+        let request = UNNotificationRequest(identifier: "mcvnot.session-expired.\(source.rawValue)",
                                             content: content, trigger: nil)
         try? await UNUserNotificationCenter.current().add(request)
     }
@@ -18,22 +18,24 @@ enum NotificationManager {
         center.removePendingNotificationRequests(withIdentifiers:
             existing.map(\.identifier).filter { $0.hasPrefix("mcvnot.") })
 
-        for task in assignments where task.state == .pending {
-            guard let due = task.dueAt, due > .now else { continue }
+        let now = Date()
+        for task in assignments {
+          for reminder in task.reminders(at: now) {
             for hours in [24, 6, 1] {
-                let fire = due.addingTimeInterval(TimeInterval(-hours * 3600))
-                guard fire > .now else { continue }
+                let fire = reminder.dueAt.addingTimeInterval(TimeInterval(-hours * 3600))
+                guard fire > now, reminder.availableAt.map({ fire >= $0 }) ?? true else { continue }
                 let content = UNMutableNotificationContent()
-                content.title = "การบ้านใกล้ส่ง: \(task.title)"
-                content.body = "\(task.courseName ?? task.course) · เหลือ \(hours) ชั่วโมง และยังไม่พบการส่งงาน"
+                content.title = "\(reminder.isReview ? "รีวิวใกล้หมดเวลา" : "การบ้านใกล้ส่ง"): \(task.title)"
+                content.body = "\(task.courseName ?? task.course) · เหลือ \(hours) ชั่วโมง · \(reminder.isReview ? "ยังรีวิวไม่ครบ" : "ยังไม่ส่งงาน")"
                 content.sound = .default
                 let parts = Calendar.current.dateComponents(
                     [.year, .month, .day, .hour, .minute, .second], from: fire)
                 let trigger = UNCalendarNotificationTrigger(dateMatching: parts, repeats: false)
-                let identifier = "mcvnot.\(task.id.hashValue).\(hours)"
+                let identifier = "mcvnot.\(task.id.hashValue).\(reminder.isReview ? "review" : "submit").\(hours)"
                 try? await center.add(UNNotificationRequest(
                     identifier: identifier, content: content, trigger: trigger))
             }
+          }
         }
     }
 }

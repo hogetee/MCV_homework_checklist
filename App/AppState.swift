@@ -1,6 +1,7 @@
 import AppKit
 import Combine
 import Foundation
+import Security
 import UserNotifications
 import WebKit
 import WidgetKit
@@ -10,118 +11,169 @@ final class AppState: NSObject, ObservableObject, WKNavigationDelegate {
     @Published private(set) var assignments: [Assignment] = AssignmentStore.load()
     @Published private(set) var lastSync: Date? = AssignmentStore.lastSync()
     @Published private(set) var isSyncing = false
-    @Published private(set) var isSignedIn = false
-    @Published private(set) var needsLogin = AssignmentStore.needsLogin()
-    @Published var message = "ลงชื่อเข้าใช้ด้วย CU Account เพื่อซิงก์การบ้าน"
+    @Published private(set) var loginSources = AssignmentStore.loginSources()
+    @Published private(set) var classDeeDeeEnabled = AssignmentStore.classDeeDeeEnabled()
+    @Published var message = "เข้าสู่ระบบเพื่อซิงก์การบ้าน"
     @Published var showLogin = false
+    @Published var loginSource = AssignmentSource.courseVille
 
     let webView: WKWebView
+    let classDeeDeeWebView: WKWebView
     private var refreshTimer: Timer?
-    private let home = URL(string: "https://www.mycourseville.com/?q=courseville&type=course&role=all")!
+    private var cookieSession: SessionCookieStore?
+    private var syncRequested = false
+
+    var needsLogin: Bool { !loginSources.isEmpty }
+    var loginMessage: String { loginSources.map(\.name).joined(separator: ", ") + " · ต้องเข้าสู่ระบบใหม่" }
+    var loginWebView: WKWebView { loginSource == .courseVille ? webView : classDeeDeeWebView }
 
     override init() {
-        let configuration = WKWebViewConfiguration()
-        configuration.websiteDataStore = .default()
-        webView = WKWebView(frame: .zero, configuration: configuration)
+        let makeWebView = { () -> WKWebView in
+            let configuration = WKWebViewConfiguration()
+            configuration.websiteDataStore = .default()
+            return WKWebView(frame: .zero, configuration: configuration)
+        }
+        webView = makeWebView()
+        classDeeDeeWebView = makeWebView()
         super.init()
-        if needsLogin { message = "เซสชันหมดอายุ · กดล็อกอินใหม่เพื่ออัปเดตงาน" }
+        if needsLogin { message = loginMessage }
         webView.navigationDelegate = self
-        webView.load(URLRequest(url: home))
+        classDeeDeeWebView.navigationDelegate = self
+        Task {
+            let cookieStore = webView.configuration.websiteDataStore.httpCookieStore
+            await SessionCookieStore.restore(into: cookieStore)
+            cookieSession = SessionCookieStore(store: cookieStore)
+            webView.load(URLRequest(url: AssignmentSource.courseVille.home))
+            if classDeeDeeEnabled {
+                classDeeDeeWebView.load(URLRequest(url: AssignmentSource.classDeeDee.home))
+            }
+        }
         refreshTimer = Timer.scheduledTimer(withTimeInterval: 15 * 60, repeats: true) { [weak self] _ in
             Task { @MainActor in await self?.sync() }
         }
+        refreshTimer?.tolerance = 60
     }
 
     deinit { refreshTimer?.invalidate() }
 
-    func signIn() {
+    func signIn(source: AssignmentSource = .courseVille) {
+        loginSource = source
+        if source == .classDeeDee {
+            classDeeDeeEnabled = true
+            AssignmentStore.enableClassDeeDee()
+        }
         showLogin = true
-        if needsLogin || webView.url == nil { webView.load(URLRequest(url: home)) }
+        if AssignmentStore.needsLogin(for: source) || loginWebView.url == nil {
+            loginWebView.load(URLRequest(url: source.home))
+        }
     }
 
     func sync() async {
-        guard !isSyncing else { return }
-        guard webView.url?.host == "www.mycourseville.com" else {
-            message = "กรุณาเข้าสู่ระบบ CU ให้เสร็จก่อนซิงก์"
+        guard !isSyncing else {
+            syncRequested = true
             return
         }
         isSyncing = true
-        defer { isSyncing = false }
-        do {
-            let known = assignments.map {
-                ["url": $0.url.absoluteString, "title": $0.title,
-                 "course": $0.course, "courseName": $0.courseName ?? "",
-                 "dueText": $0.dueLabel]
+        defer {
+            isSyncing = false
+            if syncRequested {
+                syncRequested = false
+                Task { await sync() }
             }
-            let knownData = try JSONSerialization.data(withJSONObject: known)
-            let knownJSON = String(decoding: knownData, as: UTF8.self)
-            let value = try await webView.callAsyncJavaScript(
-                CourseVilleScript.fetchAssignments,
-                arguments: ["previousItemsJSON": knownJSON],
-                in: nil,
-                contentWorld: .page
-            )
-            guard let json = value as? String, let data = json.data(using: .utf8) else {
-                throw SyncError.invalidResponse
-            }
-            let result = try JSONDecoder().decode(FetchResult.self, from: data)
-            if result.authRequired {
-                await requireLogin()
-                return
-            }
-            let fetched = result.items
-            let previous = Dictionary(uniqueKeysWithValues: assignments.map { ($0.id, $0) })
-            assignments = fetched.compactMap { Assignment(fetched: $0, previous: previous[$0.id]) }
-                .sorted { left, right in
-                    let leftPriority = left.state == .pending ? 0 : (left.state == .unknown ? 1 : 2)
-                    let rightPriority = right.state == .pending ? 0 : (right.state == .unknown ? 1 : 2)
-                    if leftPriority != rightPriority { return leftPriority < rightPriority }
-                    if left.state == .submitted {
-                        return (left.dueAt ?? .distantPast) > (right.dueAt ?? .distantPast)
-                    }
-                    return (left.dueAt ?? .distantFuture) < (right.dueAt ?? .distantFuture)
-                }
-            AssignmentStore.save(assignments)
-            lastSync = .now
-            isSignedIn = true
-            needsLogin = false
-            message = assignments.isEmpty ? "ไม่พบงานในรายวิชาปัจจุบัน" : "ซิงก์แล้ว \(assignments.count) งาน"
-            await NotificationManager.reschedule(for: assignments)
-            WidgetCenter.shared.reloadAllTimelines()
-        } catch {
-            message = "ซิงก์ไม่สำเร็จ: \(error.localizedDescription) · ข้อมูลล่าสุดยังอยู่"
         }
+        var results: [String] = []
+        var updated = false
+        let sources: [AssignmentSource] = classDeeDeeEnabled ? [.courseVille, .classDeeDee] : [.courseVille]
+        for source in sources {
+            let view = source == .courseVille ? webView : classDeeDeeWebView
+            guard view.url?.host == source.home.host, !view.isLoading else {
+                results.append("\(source.name): รอเข้าสู่ระบบให้เสร็จ")
+                continue
+            }
+            do {
+                let old = assignments.filter { $0.origin == source }
+                let known = old.filter { source == .courseVille || $0.shouldDisplay(at: .now) }.map {
+                    ["url": $0.url.absoluteString, "title": $0.title,
+                     "course": $0.course, "courseName": $0.courseName ?? "", "dueText": $0.dueLabel]
+                }
+                let knownData = try JSONSerialization.data(withJSONObject: known)
+                let value = try await view.callAsyncJavaScript(
+                    source == .courseVille ? CourseVilleScript.fetchAssignments : ClassDeeDeeScript.fetchAssignments,
+                    arguments: ["previousItemsJSON": String(decoding: knownData, as: UTF8.self)],
+                    in: nil, contentWorld: .page)
+                guard let json = value as? String, let data = json.data(using: .utf8) else {
+                    throw SyncError.invalidResponse
+                }
+                var incoming: [Assignment]
+                var failedCourses: [String] = []
+                if source == .courseVille {
+                    let result = try JSONDecoder().decode(FetchResult.self, from: data)
+                    if result.authRequired {
+                        await requireLogin(source)
+                        results.append("\(source.name): ต้องเข้าสู่ระบบใหม่")
+                        continue
+                    }
+                    let previous = Dictionary(uniqueKeysWithValues: old.map { ($0.id, $0) })
+                    incoming = result.items.compactMap { Assignment(fetched: $0, previous: previous[$0.id]) }
+                } else {
+                    let result = try JSONDecoder().decode(ClassDeeDeeFetchResult.self, from: data)
+                    if result.authRequired {
+                        await requireLogin(source)
+                        results.append("\(source.name): ต้องเข้าสู่ระบบใหม่")
+                        continue
+                    }
+                    incoming = result.items.compactMap { Assignment(classDeeDee: $0) }
+                    failedCourses = result.failedCourses
+                    incoming += old.filter { failedCourses.contains($0.course) }
+                }
+                assignments = assignments.filter { $0.origin != source } + incoming
+                AssignmentStore.save(assignments, source: source)
+                updated = true
+                let warning = failedCourses.isEmpty ? "" : " · บางวิชาซิงก์ไม่ได้ ใช้ข้อมูลเดิม"
+                let hiddenReviewed = incoming.filter {
+                    $0.hasReview && $0.isReviewPhase(at: .now) &&
+                    $0.displayState(at: .now) == .submitted && !$0.shouldDisplay(at: .now)
+                }.count
+                let completed = hiddenReviewed > 0 ? " · รีวิวครบและพ้นกำหนด \(hiddenReviewed) งาน" : ""
+                results.append("\(source.name): \(incoming.count) งาน\(completed)\(warning)")
+                if source == .classDeeDee, let cookieSession,
+                   await cookieSession.persist() != errSecSuccess {
+                    results.append("เก็บเซสชันไม่ได้ · เปิดแอปใหม่อาจต้องล็อกอินอีกครั้ง")
+                }
+            } catch {
+                results.append("\(source.name): ซิงก์ไม่สำเร็จ · ข้อมูลล่าสุดยังอยู่")
+            }
+        }
+        lastSync = AssignmentStore.lastSync()
+        loginSources = AssignmentStore.loginSources()
+        message = results.joined(separator: "  |  ")
+        if updated { await NotificationManager.reschedule(for: assignments) }
+        WidgetCenter.shared.reloadAllTimelines()
     }
 
-    private func requireLogin() async {
-        guard lastSync != nil else {
-            message = "กรุณาเข้าสู่ระบบ CU ในแอปก่อนซิงก์"
-            return
-        }
-        let shouldNotify = !needsLogin
-        needsLogin = true
-        isSignedIn = false
-        AssignmentStore.setNeedsLogin(true)
-        message = "เซสชันหมดอายุ · กดล็อกอินใหม่เพื่ออัปเดตงาน"
+    private func requireLogin(_ source: AssignmentSource) async {
+        let shouldNotify = AssignmentStore.lastSync(for: source) != nil && !AssignmentStore.needsLogin(for: source)
+        AssignmentStore.setNeedsLogin(true, source: source)
+        loginSources = AssignmentStore.loginSources()
         WidgetCenter.shared.reloadAllTimelines()
-        if shouldNotify { await NotificationManager.notifySessionExpired() }
+        if shouldNotify { await NotificationManager.notifySessionExpired(source: source) }
     }
 
     func askForNotifications() async {
         do {
-            let allowed = try await UNUserNotificationCenter.current()
-                .requestAuthorization(options: [.alert, .sound])
-            message = allowed ? "เปิดการแจ้งเตือนแล้ว" : "ยังไม่ได้อนุญาตการแจ้งเตือน"
+            let allowed = try await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound])
+            message = allowed ? "เปิดการแจ้งเตือนส่งงานและรีวิวแล้ว" : "ยังไม่ได้อนุญาตการแจ้งเตือน"
             if allowed { await NotificationManager.reschedule(for: assignments) }
         } catch {
             message = "เปิดการแจ้งเตือนไม่สำเร็จ: \(error.localizedDescription)"
         }
     }
 
-    func open(_ assignment: Assignment) { NSWorkspace.shared.open(assignment.url) }
+    func open(_ assignment: Assignment) { NSWorkspace.shared.open(assignment.displayURL(at: .now)) }
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        if webView.url?.host == "www.mycourseville.com", webView.url?.path == "/" {
+        let source: AssignmentSource = webView === classDeeDeeWebView ? .classDeeDee : .courseVille
+        if webView.url?.host == source.home.host {
             Task { await sync() }
         }
     }
@@ -132,7 +184,13 @@ private struct FetchResult: Decodable {
     let items: [FetchedAssignment]
 }
 
+private struct ClassDeeDeeFetchResult: Decodable {
+    let authRequired: Bool
+    let items: [FetchedClassDeeDeeAssignment]
+    let failedCourses: [String]
+}
+
 private enum SyncError: LocalizedError {
     case invalidResponse
-    var errorDescription: String? { "ข้อมูลตอบกลับจาก myCourseVille ไม่ถูกต้อง" }
+    var errorDescription: String? { "ข้อมูลตอบกลับจากเว็บไม่ถูกต้อง" }
 }

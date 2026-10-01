@@ -5,32 +5,33 @@ struct MCVEntry: TimelineEntry {
     let date: Date
     let assignments: [Assignment]
     let lastSync: Date?
-    let needsLogin: Bool
+    let loginSources: [AssignmentSource]
 }
 
 struct MCVProvider: TimelineProvider {
     func placeholder(in context: Context) -> MCVEntry {
-        MCVEntry(date: .now, assignments: [], lastSync: nil, needsLogin: false)
+        MCVEntry(date: .now, assignments: [], lastSync: nil, loginSources: [])
     }
 
     func getSnapshot(in context: Context, completion: @escaping (MCVEntry) -> Void) {
         completion(MCVEntry(date: .now, assignments: AssignmentStore.load(),
                             lastSync: AssignmentStore.lastSync(),
-                            needsLogin: AssignmentStore.needsLogin()))
+                            loginSources: AssignmentStore.loginSources()))
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<MCVEntry>) -> Void) {
         let tasks = AssignmentStore.load()
         let lastSync = AssignmentStore.lastSync()
-        let needsLogin = AssignmentStore.needsLogin()
+        let loginSources = AssignmentStore.loginSources()
         let now = Date()
-        let nextDates = tasks.compactMap(\.dueAt).flatMap { due in
+        let deadlines = tasks.flatMap { [$0.dueAt, $0.reviewDueAt].compactMap { $0 } }
+        let nextDates = (deadlines.flatMap { due in
             [due.addingTimeInterval(-24 * 3600), due.addingTimeInterval(-6 * 3600),
              due.addingTimeInterval(-3600), due]
-        }.filter { $0 > now && $0 < now.addingTimeInterval(24 * 3600) }
+        } + tasks.compactMap(\.reviewStartsAt)).filter { $0 > now && $0 < now.addingTimeInterval(24 * 3600) }
         let dates = Array(Set([now] + nextDates)).sorted()
         let entries = dates.map { MCVEntry(date: $0, assignments: tasks,
-                                           lastSync: lastSync, needsLogin: needsLogin) }
+                                           lastSync: lastSync, loginSources: loginSources) }
         completion(Timeline(entries: entries, policy: .after(now.addingTimeInterval(30 * 60))))
     }
 }
@@ -40,7 +41,7 @@ struct MCVWidgetView: View {
     let entry: MCVEntry
 
     private var visibleAssignments: [Assignment] {
-        entry.assignments.filter { $0.shouldDisplay(at: entry.date) }
+        Assignment.visible(entry.assignments, at: entry.date)
     }
 
     var body: some View {
@@ -72,14 +73,14 @@ struct MCVWidgetView: View {
     private func assignmentList(limit: Int) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 6) {
-                Text("การบ้าน MCV").font(.headline)
+                Text("การบ้านและรีวิว").font(.headline)
                 Spacer(minLength: 0)
-                Text("\(entry.assignments.filter { $0.state == .pending }.count) ค้าง")
+                Text("\(visibleAssignments.filter { $0.displayState(at: entry.date) == .pending }.count) ค้าง")
                     .font(.caption.bold())
             }
 
-            if entry.needsLogin {
-                Text("เซสชันหมดอายุ · เปิดแอปเพื่อล็อกอินใหม่")
+            if !entry.loginSources.isEmpty {
+                Text(entry.loginSources.map(\.name).joined(separator: ", ") + " · ต้องล็อกอินใหม่")
                     .font(.caption2).foregroundStyle(.orange)
             } else if let lastSync = entry.lastSync,
                       entry.date.timeIntervalSince(lastSync) > 60 * 60 {
@@ -95,14 +96,14 @@ struct MCVWidgetView: View {
                     .font(.caption).foregroundStyle(.secondary)
             } else {
                 ForEach(Array(visibleAssignments.prefix(limit))) { task in
-                    Link(destination: task.url) {
+                    Link(destination: task.displayURL(at: entry.date)) {
                         HStack(spacing: 7) {
-                            Image(systemName: task.state == .submitted ? "checkmark.circle.fill" :
-                                    task.state == .pending ? "circle.fill" : "questionmark.circle.fill")
+                            Image(systemName: task.displayState(at: entry.date) == .submitted ? "checkmark.circle.fill" :
+                                    task.displayState(at: entry.date) == .pending ? "circle.fill" : "questionmark.circle.fill")
                                 .foregroundStyle(color(for: task))
                             VStack(alignment: .leading, spacing: 1) {
-                                Text(task.title).lineLimit(1).font(.caption.bold())
-                                Text("\(task.courseName ?? task.course) · \(task.statusText)")
+                                Text(task.displayTitle(at: entry.date)).lineLimit(1).font(.caption.bold())
+                                Text(task.detailText(at: entry.date))
                                     .lineLimit(1).font(.caption2)
                                     .foregroundStyle(color(for: task))
                             }
@@ -117,7 +118,7 @@ struct MCVWidgetView: View {
     }
 
     private func color(for task: Assignment) -> Color {
-        switch task.state {
+        switch task.displayState(at: entry.date) {
         case .submitted: .green
         case .pending: .red
         case .unknown: .orange
@@ -131,8 +132,8 @@ struct MCVWidget: Widget {
         StaticConfiguration(kind: kind, provider: MCVProvider()) { entry in
             MCVWidgetView(entry: entry)
         }
-        .configurationDisplayName("การบ้าน myCourseVille (ใหม่)")
-        .description("งานที่ยังไม่ส่งและงานที่ส่งแล้ว พร้อมกำหนดส่ง")
+        .configurationDisplayName("การบ้าน MCV + ClassDeeDee")
+        .description("สถานะส่งงานและรีวิว พร้อมกำหนดส่งจากทั้งสองเว็บ")
         .supportedFamilies([.systemMedium, .systemLarge])
     }
 }

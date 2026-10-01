@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT="$(cd -- "$(dirname -- "$0")/.." && pwd)"
 APP_PATH="$ROOT/MCVNot.app"
 WIDGET_ID=""
+APP_ID=""
 APP_INFO="$ROOT/App/Info.plist"
 WIDGET_INFO="$ROOT/Widget/Info.plist"
 DEVELOPER_DIR="/Applications/Xcode.app/Contents/Developer"
@@ -55,6 +56,7 @@ if [[ ! -d "$BUILT_APP" || ! -d "$BUILT_EXTENSION" ]]; then
     echo "Build did not produce the app and widget extension." >&2
     exit 1
 fi
+APP_ID="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$BUILT_APP/Contents/Info.plist")"
 WIDGET_ID="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$BUILT_EXTENSION/Contents/Info.plist")"
 WIDGET_VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$BUILT_EXTENSION/Contents/Info.plist")"
 if [[ -z "$WIDGET_ID" ]]; then
@@ -63,6 +65,8 @@ if [[ -z "$WIDGET_ID" ]]; then
 fi
 
 /usr/bin/killall -TERM MCVNot 2>/dev/null || true
+# Stop the loaded extension so WidgetKit starts the newly installed executable.
+/usr/bin/killall -TERM MCVWidget 2>/dev/null || true
 /usr/bin/ditto "$BUILT_APP" "$STAGED_APP"
 if [[ -e "$APP_PATH" ]]; then /bin/mv "$APP_PATH" "$BACKUP_APP"; fi
 /bin/mv "$STAGED_APP" "$APP_PATH"
@@ -76,6 +80,18 @@ while IFS= read -r plugin_path; do
     [[ "$plugin_path" == "$TARGET_EXTENSION" ]] && continue
     /usr/bin/pluginkit -r "$plugin_path" 2>/dev/null || true
 done <<< "$REGISTERED_PATHS"
+
+# Retire this project's pre-v2 widget, which has a different identifier.
+LEGACY_PATHS="$(/usr/bin/pluginkit -m -v -A -D -i "$APP_ID.widget" 2>/dev/null | \
+    /usr/bin/awk -F '\t' 'NF >= 4 { print $NF }' | /usr/bin/sort -u)"
+while IFS= read -r plugin_path; do
+    [[ -n "$plugin_path" ]] || continue
+    /usr/bin/pluginkit -r "$plugin_path" 2>/dev/null || true
+    legacy_app="${plugin_path%%/Contents/PlugIns/*}"
+    if [[ "$legacy_app" != "$plugin_path" && "$legacy_app" != "$APP_PATH" ]]; then
+        "$LSREGISTER" -u "$legacy_app" 2>/dev/null || true
+    fi
+done <<< "$LEGACY_PATHS"
 
 "$LSREGISTER" -f -R -trusted "$APP_PATH"
 /usr/bin/pluginkit -a "$TARGET_EXTENSION"
