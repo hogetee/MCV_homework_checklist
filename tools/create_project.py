@@ -27,16 +27,16 @@ project_id = ident("project")
 app_target = ident("app target")
 widget_target = ident("widget target")
 
-app_sources = ["App/MCVNotApp.swift", "App/AppState.swift", "App/ContentView.swift",
-               "App/LoginWebView.swift", "App/NotificationManager.swift", "App/CourseVilleScript.swift"]
+app_sources = sorted(str(p.relative_to(root)) for p in (root / "App").glob("*.swift"))
+app_resources = ["App/Resources/AppIcon.icns"]
 shared_sources = ["Shared/Assignment.swift", "Shared/AssignmentStore.swift"]
 widget_sources = ["Widget/MCVWidget.swift"]
 other_files = ["App/Info.plist", "App/MCVNot.entitlements",
                "Widget/Info.plist", "Widget/MCVWidget.entitlements"]
 
 refs = {}
-for path in app_sources + shared_sources + widget_sources + other_files:
-    filetype = "sourcecode.swift" if path.endswith(".swift") else "text.plist.xml"
+for path in app_sources + shared_sources + widget_sources + other_files + app_resources:
+    filetype = "sourcecode.swift" if path.endswith(".swift") else "image.icns" if path.endswith(".icns") else "text.plist.xml"
     refs[path] = add("file " + path, "{ isa = PBXFileReference; lastKnownFileType = " + filetype +
                      "; path = " + q(Path(path).name) + "; sourceTree = \"<group>\"; }")
 
@@ -49,7 +49,8 @@ def group(name, children):
     return add("group " + name, "{ isa = PBXGroup; children = " + arr(children) +
                "; path = " + q(name) + "; sourceTree = \"<group>\"; }")
 
-app_group = group("App", [refs[p] for p in app_sources + other_files[:2]])
+resource_group = group("Resources", [refs[p] for p in app_resources])
+app_group = group("App", [refs[p] for p in app_sources + other_files[:2]] + [resource_group])
 shared_group = group("Shared", [refs[p] for p in shared_sources])
 widget_group = group("Widget", [refs[p] for p in widget_sources + other_files[2:]])
 products_group = add("products group", "{ isa = PBXGroup; children = " +
@@ -65,6 +66,10 @@ def source_phase(name, paths):
     return add(name + " sources", "{ isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; "
                "files = " + arr(files) + "; runOnlyForDeploymentPostprocessing = 0; }")
 
+resource_files = [add("app resource " + p, "{ isa = PBXBuildFile; fileRef = " + refs[p] + "; }")
+                  for p in app_resources]
+resource_phase = add("app resources", "{ isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; "
+                     "files = " + arr(resource_files) + "; runOnlyForDeploymentPostprocessing = 0; }")
 app_phase = source_phase("app", app_sources + shared_sources)
 widget_phase = source_phase("widget", widget_sources + shared_sources)
 embed_file = add("embed widget", "{ isa = PBXBuildFile; fileRef = " + widget_product +
@@ -112,7 +117,7 @@ app_configs = config_list("app", app_settings)
 widget_configs = config_list("widget", widget_settings)
 
 objects[app_target] = ("{ isa = PBXNativeTarget; buildConfigurationList = " + app_configs +
-    "; buildPhases = " + arr([app_phase, embed_phase]) +
+    "; buildPhases = " + arr([app_phase, resource_phase, embed_phase]) +
     "; buildRules = (); dependencies = " + arr([dependency]) +
     "; name = MCVNot; productName = MCVNot; productReference = " + app_product +
     "; productType = \"com.apple.product-type.application\"; }")

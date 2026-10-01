@@ -4,6 +4,10 @@
  classes = {};
  objectVersion = 60;
  objects = {
+  42A952437C1386C2011C0001 = { isa = PBXFileReference; lastKnownFileType = image.icns; path = "AppIcon.icns"; sourceTree = "<group>"; };
+  42A952437C1386C2011C0002 = { isa = PBXBuildFile; fileRef = 42A952437C1386C2011C0001; };
+  42A952437C1386C2011C0003 = { isa = PBXGroup; children = ( 42A952437C1386C2011C0001, ); path = "Resources"; sourceTree = "<group>"; };
+  42A952437C1386C2011C0004 = { isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = ( 42A952437C1386C2011C0002, ); runOnlyForDeploymentPostprocessing = 0; };
   42A952437C1386C201CDD005 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SessionRecovery.swift"; sourceTree = "<group>"; };
   42A952437C1386C201CDD006 = { isa = PBXBuildFile; fileRef = 42A952437C1386C201CDD005; };
   42A952437C1386C201CDD003 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SessionCookieStore.swift"; sourceTree = "<group>"; };
@@ -16,7 +20,7 @@
   0C4D1537E556FD3CB06548AC = { isa = PBXBuildFile; fileRef = 07ED26221AC80808A805D841; };
   13E631B26424479A8D293968 = { isa = PBXBuildFile; fileRef = 1A58BC2491ED283D2B70FC84; };
   1A58BC2491ED283D2B70FC84 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CourseVilleScript.swift"; sourceTree = "<group>"; };
-  1C451FDB50AB3A302B8F03A7 = { isa = PBXGroup; children = ( 5615BFA1E0662D48281402EE, D2DB247AF22215B10F0B2DC3, 07ED26221AC80808A805D841, 64E0DAA2821FB6FF53989B5E, 44B3B3F2F1537B03D46CF723, 1A58BC2491ED283D2B70FC84, 42A952437C1386C201CDD001, 42A952437C1386C201CDD003, 42A952437C1386C201CDD005, 6F7631E669C982ED0667DFFE, 3DCEA04BA627A01BA3FE2030, ); path = "App"; sourceTree = "<group>"; };
+  1C451FDB50AB3A302B8F03A7 = { isa = PBXGroup; children = ( 5615BFA1E0662D48281402EE, D2DB247AF22215B10F0B2DC3, 07ED26221AC80808A805D841, 64E0DAA2821FB6FF53989B5E, 44B3B3F2F1537B03D46CF723, 1A58BC2491ED283D2B70FC84, 42A952437C1386C201CDD001, 42A952437C1386C201CDD003, 42A952437C1386C201CDD005, 42A952437C1386C2011C0003, 6F7631E669C982ED0667DFFE, 3DCEA04BA627A01BA3FE2030, ); path = "App"; sourceTree = "<group>"; };
   21B05ADFC9610D58D963A191 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AssignmentStore.swift"; sourceTree = "<group>"; };
   27277985B6ABFD0B41EDC2D6 = { isa = PBXTargetDependency; target = AC39DB9CBFAEA4FB3D74627B; targetProxy = 5DDC78EFCA17D560CB95A048; };
   376CCAEB01125556EA30A8A7 = { isa = PBXBuildFile; fileRef = 21B05ADFC9610D58D963A191; };
@@ -38,7 +42,7 @@
   7FEFA489E25E19BEF8A8A2A9 = { isa = PBXGroup; children = ( 1C451FDB50AB3A302B8F03A7, 936C37A5DEDD98F28AD8FB7C, FB7A013CDC3DC41710E66FE2, 5015CD1BF7713BE910007C79, ); sourceTree = "<group>"; };
   830019E6FC08E5505CDC1AFC = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Assignment.swift"; sourceTree = "<group>"; };
   83BA866110DA1B5902155457 = { isa = PBXBuildFile; fileRef = 7291C3226186815A025E12E9; settings = { ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-  8FC2453ED5EBF1568058C839 = { isa = PBXNativeTarget; buildConfigurationList = 3F6123883CCE08676BA01A04; buildPhases = ( CB1F8341FDD0D5C6400FDAF8, 72EE5623C6675721514C9186, ); buildRules = (); dependencies = ( 27277985B6ABFD0B41EDC2D6, ); name = MCVNot; productName = MCVNot; productReference = B9074B1E49FB5A6E382E802D; productType = "com.apple.product-type.application"; };
+  8FC2453ED5EBF1568058C839 = { isa = PBXNativeTarget; buildConfigurationList = 3F6123883CCE08676BA01A04; buildPhases = ( CB1F8341FDD0D5C6400FDAF8, 42A952437C1386C2011C0004, 72EE5623C6675721514C9186, ); buildRules = (); dependencies = ( 27277985B6ABFD0B41EDC2D6, ); name = MCVNot; productName = MCVNot; productReference = B9074B1E49FB5A6E382E802D; productType = "com.apple.product-type.application"; };
   936C37A5DEDD98F28AD8FB7C = { isa = PBXGroup; children = ( 830019E6FC08E5505CDC1AFC, 21B05ADFC9610D58D963A191, ); path = "Shared"; sourceTree = "<group>"; };
   9379037BA50D865E0E95726F = { isa = PBXBuildFile; fileRef = F96139F21A8F41186D918C4B; };
   9896F4B3E00BD2F03DAB4032 = { isa = PBXBuildFile; fileRef = 64E0DAA2821FB6FF53989B5E; };
